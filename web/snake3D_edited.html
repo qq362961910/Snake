@@ -1,0 +1,446 @@
+﻿<!doctype html>
+<html>
+<meta charset="UTF-8">
+<title>snake3D</title>
+<script src="ThreeJs.js"></script>
+<script src="optimer_bold.typeface.js"></script>
+<script>
+
+    var len = 5;
+    var cube_l = 10;
+    var plane_width = 400;
+    var plane_length = 400;
+
+    var renderer;
+    var camera;
+    var scene;
+    var light;
+    var snake = [];
+    var plane;
+    var food;
+    var start_scene;
+    var start_scene_title;
+
+    var magic = 15;
+    var left = 1;
+    var up = 3;
+    var right = 7;
+    var down = 15;
+    var head_for = right;
+    var started = false;
+
+    var dead = false;
+
+    var area_first = 1;
+    var area_second = 2;
+    var area_third = 3;
+    var area_fourth = 4;
+
+    function init() {
+
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        // renderer
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(width, height);
+        document.body.appendChild(renderer.domElement);
+        renderer.setClearColor('pink', 1.0);
+
+        // camera
+        camera = new THREE.PerspectiveCamera(45, width / height, 1, 5000);
+        camera.position.set(0, 280, 600);
+        camera.up.x = 0;
+        camera.up.y = 1;
+        camera.up.z = 0;
+        camera.lookAt({x: 0, y: 0, z: 0});
+        camera.clockwise = true;
+        camera.currentAngle = 0;
+        camera.area = checkCameraArea();
+        camera.round_r = Math.abs(camera.position.z);
+        scene = new THREE.Scene();
+
+        // light
+        light = new THREE.DirectionalLight('white', 1.0, 0);
+        light.position.set(600, 600, 600);
+        scene.add(light);
+
+        // plane
+        var planeGeometry = new THREE.PlaneGeometry(plane_width, plane_length, 40, 40);
+        var planeMaterial = new THREE.MeshBasicMaterial({color: 'green', overdraw: 0.5, wireframe: false});
+        plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.position.set(0, 0, 0);
+        plane.rotation.x = -Math.PI / 2;
+        scene.add(plane);
+
+        renderer.render(scene, camera);
+
+        //start_scene
+        start_scene = new THREE.Scene();
+
+        // start_scene_title
+        var start_scene_title_material = new THREE.MeshFaceMaterial([
+            new THREE.MeshPhongMaterial({color: 'yellow', shading: THREE.FlatShading}), // front
+            new THREE.MeshPhongMaterial({color: 'yellow', shading: THREE.SmoothShading}) // side
+        ]);
+        var start_scene_title_geometry = new THREE.TextGeometry("Hello World", {
+            size: 60,
+            height: 10,
+            curveSegments: 4,
+            font: "optimer",
+            weight: "bold",
+            style: "normal"
+        });
+        start_scene_title = new THREE.Mesh(start_scene_title_geometry, start_scene_title_material);
+        start_scene_title.rotation.x = -Math.PI / 6;
+        start_scene_title.position.set(-(plane_width / 2), 0, 0);
+        start_scene.add(start_scene_title);
+
+        start_scene.add(light);
+        renderer.render(start_scene, camera);
+
+        // 0 = none, 1 = snake body, 2 = food
+
+        // food
+        food = generateFood(food);
+        scene.add(food);
+
+        document.addEventListener('keydown', onKeyDown, false);
+
+        // begin from left corner
+        for (var i = 0; i < len; i++) {
+            snake[i] = generateCube();
+            snake[i].position.x = (-plane_width / 2) + i * 10 + cube_l / 2;
+            snake[i].position.y = 5;
+            snake[i].position.z = -(plane_width / 2) + cube_l / 2;
+            snake[i].currentDirection = right;
+            scene.add(snake[i]);
+        }
+    }
+
+    function onKeyDown(event) {
+
+        if (!started) {
+            started = true;
+            run();
+            camera_round();
+        }
+
+        var keynum;
+        // IE
+        if (window.event) {
+            keynum = event.keyCode;
+        }
+        // Netscape/Firefox/Opera
+        else if (event.which) {
+            keynum = event.which;
+        }
+        else {
+            console.log("unknown event: " + event);
+            return;
+        }
+
+//        方向键(←)： VK_LEFT (37)
+//        方向键(↑)： VK_UP (38)
+//        方向键(→)： VK_RIGHT (39)
+//        方向键(↓)： VK_DOWN (40)
+        if (keynum == 37 && head_for != left) {
+            head_for = left;
+            console.log("direction: left");
+        }
+        else if (keynum == 38) {
+            head_for = up;
+            console.log("direction: up");
+        }
+        else if (keynum == 39) {
+            head_for = right;
+            console.log("direction: right");
+        }
+        else if (keynum == 40) {
+            head_for = down;
+            console.log("direction: down");
+        }
+    }
+
+    function move() {
+
+        var eat = false;
+        var direction;
+        var lastCube;
+        for (var i = snake.length - 1; i > -1; i--) {
+            var current_cube = snake[i];
+            cube_move(current_cube, current_cube.currentDirection);
+            if (i > 0) {
+                snake[i - 1].nextDirection = current_cube.currentDirection;
+                // header
+                if (i == (snake.length - 1)) {
+                    snake[i].nextDirection = head_for;
+                    if (food.position.x == current_cube.position.x && food.position.z == current_cube.position.z) {
+                        generateFood(food);
+                        eat = true;
+                        direction = snake[0].currentDirection;
+                        lastCube = snake[0];
+                    }
+                }
+            }
+            current_cube.currentDirection = current_cube.nextDirection;
+        }
+
+        if (eat) {
+            var cubeNew = cube_grow(lastCube, direction);
+            cubeNew.currentDirection = direction;
+            snake.unshift(cubeNew);
+            scene.add(cubeNew);
+        }
+
+    }
+
+    function camera_round() {
+        requestAnimationFrame(camera_round);
+        var r = camera.round_r;
+        var angle = camera.currentAngle;
+        var area = camera.area;
+        //顺时针
+        if (camera.clockwise) {
+
+            var x,y;
+            var cos,sin;
+
+            if (angle == 0) {
+                sin = 0;
+                cos = 1;
+            }
+            else if (angle == 90) {
+                sin = 1;
+                cos = 0;
+            }
+            else {
+                sin = Math.sin(Math.PI / 180 * camera.currentAngle);
+                cos = Math.cos(Math.PI / 180 * camera.currentAngle);
+            }
+
+            if (area == area_first) {
+                x = cos * r;
+                y = sin * r;
+                camera.position.x = x;
+                camera.position.z = y;
+            }
+            else if (area == area_second) {
+                y = cos * r;
+                x = sin * r;
+                camera.position.x = -x;
+                camera.position.z = y;
+            }
+            else if (area == area_third) {
+                x = cos * r;
+                y = sin * r;
+                camera.position.x = -x;
+                camera.position.z = -y;
+            }
+            else if (area == area_fourth) {
+                y = cos * r;
+                x = sin * r;
+                camera.position.x = x;
+                camera.position.z = -y;
+            }
+            else {
+                console.log("camera在原点(0,0)....");
+            }
+        }
+        //逆时针
+        else {
+
+        }
+        angle+=0.1;
+        if (angle > 90) {
+            area++;
+            camera.currentAngle = 1;
+            camera.area = area > area_fourth ? area_first : area;
+        }
+        else {
+            camera.currentAngle = angle;
+        }
+        camera.lookAt({x: 0, y: 0, z: 0});
+        console.log("第 " + area + "区, 角度：" + angle +", camera x: " + camera.position.x + ", y: " + camera.position.z);
+        renderer.render(scene, camera);
+    }
+    function checkCameraArea() {
+
+        if (camera.position.x > 0 && camera.position.z >= 0) {
+            return area_first;
+        }
+        else if (camera.position.x <= 0 && camera.position.z > 0) {
+            return area_second;
+        }
+        else if (camera.position.x < 0 && camera.position.z <= 0) {
+            return area_third;
+        }
+        else if (camera.position.x >= 0 && camera.position.z < 0) {
+            return area_fourth;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    function cube_grow(lastCube, lastDirection) {
+        var cubeNew = generateCube();
+        switch (lastDirection) {
+            case left:
+            {
+                cubeNew.position.x = lastCube.position.x + 10;
+                cubeNew.position.z = lastCube.position.z;
+                cubeNew.position.y = 5;
+                break;
+            }
+            case up:
+            {
+                cubeNew.position.x = lastCube.position.x;
+                cubeNew.position.z = lastCube.position.z + 10;
+                cubeNew.position.y = 5;
+                break;
+            }
+            case right:
+            {
+                cubeNew.position.x = lastCube.position.x + (-10);
+                cubeNew.position.z = lastCube.position.z;
+                cubeNew.position.y = 5;
+                break;
+            }
+            case down:
+            {
+                cubeNew.position.x = lastCube.position.x;
+                cubeNew.position.z = lastCube.position.z + (-10);
+                ;
+                cubeNew.position.y = 5;
+                break;
+            }
+            default:
+            {
+
+            }
+        }
+        return cubeNew;
+    }
+
+    function cube_move(cube, direction) {
+
+        switch (direction) {
+            case left:
+            {
+                cube.position.x += (-10);
+                if (cube.position.x < -(plane_width / 2)) {
+                    dead = true;
+                    alert("Game Over");
+                }
+                break;
+            }
+            case up:
+            {
+                cube.position.z += (-10);
+                if (cube.position.z < -(plane_length / 2)) {
+                    dead = true;
+                    alert("Game Over");
+                }
+                break;
+            }
+            case right:
+            {
+                cube.position.x += 10;
+                if (cube.position.x > plane_width / 2) {
+                    dead = true;
+                    alert("Game Over");
+                }
+                break;
+            }
+            case down:
+            {
+                cube.position.z += 10;
+                if (cube.position.z > plane_length / 2) {
+                    dead = true;
+                    alert("Game Over");
+                }
+                break;
+            }
+            default:
+            {
+                console.log('unknown movement direction');
+            }
+        }
+    }
+
+    function render() {
+        move();
+        renderer.render(scene, camera);
+    }
+
+
+    function run() {
+        render();
+        if (!dead) {
+            setTimeout("run()", 200);
+        }
+    }
+
+    function generateCube() {
+        var cubeGeometry = new THREE.CubeGeometry(cube_l, cube_l, cube_l);
+
+        var hex = Math.random() * 0xffffff;
+        for (var k = 0; k < cubeGeometry.faces.length; k += 2) {
+            cubeGeometry.faces[k].color.setHex(hex);
+            cubeGeometry.faces[k + 1].color.setHex(hex);
+        }
+        var cubeMaterial = new THREE.MeshBasicMaterial({
+            vertexColors: THREE.FaceColors,
+            overdraw: 0.5,
+            wireframe: false
+        });
+        return new THREE.Mesh(cubeGeometry, cubeMaterial);
+    }
+
+    function generateFood(food) {
+
+        var x = Math.ceil(Math.random() * 1000) % 201;
+        var y = Math.ceil(Math.random() * 1000) % 201;
+
+        var isNx = (Math.random() > 0.5);
+        var isNy = (Math.random() < 0.5);
+
+        console.log("x: " + x + ", y: " + y);
+        x = x - (x % 10) - cube_l / 2;
+        y = y - (y % 10) - cube_l / 2;
+
+        if (isNx) {
+            x = 0 - x;
+        }
+        if (isNy) {
+            y = 0 - y;
+        }
+
+        if (food) {
+            food.position.set(x, 25, y);
+        }
+        else {
+            var foodGeometry = new THREE.CubeGeometry(cube_l, cube_l, 50);
+            for (var i = 0; i < foodGeometry.faces.length; i += 2) {
+                var hex = Math.random() * 0xffffff;
+                foodGeometry.faces[i].color.setHex(hex);
+                foodGeometry.faces[i + 1].color.setHex(hex);
+            }
+            var foodMaterial = new THREE.MeshBasicMaterial({
+                vertexColors: THREE.FaceColors,
+                overdraw: 0.5,
+                wireframe: false
+            });
+
+            food = new THREE.Mesh(foodGeometry, foodMaterial);
+            food.position.set(x, 25, y);
+            food.rotation.x = -Math.PI / 2;
+            console.log("x: " + x + ", y: " + y);
+            return food;
+        }
+    }
+</script>
+<body onload='init();'>
+</body>
+</html>  
