@@ -1,0 +1,48 @@
+<html>
+<head>
+ <script type="text/javascript" src="ThreeJs.js"></script>
+</head>
+<body onload="init()">
+<p>12312312312313</p>
+<p>12312312312313</p>
+<p>12312312312313</p>
+<p>12312312312313</p>
+<p>12312312312313</p>
+<p>12312312312313</p>
+<p>12312312312313</p>
+<p>12312312312313</p>
+<p>12312312312313</p>
+<p>12312312312313</p>
+<p>12312312312313</p>
+
+ <canvas id="mainCanvas"></canvas>
+</body>
+<script type="text/javascript">
+  function init() {
+      //渲染器
+      var renderer = new THREE.WebGLRenderer();
+      //设置渲染器大小
+      renderer.setSize(400, 300);
+      //将渲染器画布(canvas)添加到body
+      document.getElementsByTagName('body')[0].appendChild(renderer.domElement);
+      //设置背景颜色
+      renderer.setClearColor(0x000000);
+
+      //场景
+      var scene = new THREE.Scene();
+
+      //照相机
+      var camera = new THREE.PerspectiveCamera(45, 4/3, 1, 1000);
+      camera.position.set(0, 0, 5);
+      scene.add(camera);
+
+      //图形
+      var cube = new THREE.Mesh(new THREE.CubeGeometry(1, 2, 3), new THREE.MeshBasicMaterial({color: 0xff0000}));
+      scene.add(cube);
+
+      //开始渲染场景
+      renderer.render(scene, camera);
+
+  }
+</script>
+</html>
