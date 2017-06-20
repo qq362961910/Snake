@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>sphere geometry demo</title>
+    <script type="text/javascript" src="/web/static/js/three.js"></script>
+</head>
+<body>
+
+</body>
+<script type="text/javascript">
+    //渲染器
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize(400, 300);
+    document.getElementsByTagName("body")[0].appendChild(renderer.domElement);
+
+    //Scene
+    var scene = new THREE.Scene();
+
+    //camera
+    var camera = new THREE.PerspectiveCamera(60, 400/300, 1, 10);
+    camera.position.set(0,0,9);
+
+    //sphere
+    var sphere = new THREE.Mesh(new THREE.SphereGeometry(3, 8, 6, Math.PI / 6, Math.PI / 18), new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        wireframe: true
+    }));
+    scene.add(sphere);
+
+    //渲染
+    renderer.render(scene, camera);
+
+</script>
+</html>
