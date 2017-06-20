@@ -70,8 +70,8 @@
 var rootPath = location.origin;
 var OBJECTS_TO_LOAD = [
     {
-        mtlPath: "/web/static/3d/tiananmen.mtl",
-        objPath: "/web/static/3d/tiananmen.obj"
+        mtl: "tiananmen.mtl",
+        obj: "tiananmen.obj"
     }
 ];
 </script>
@@ -83,6 +83,7 @@ var OBJECTS_TO_LOAD = [
     var directWhiteLight;
     var directBlueLight;
     var directBlackLight;
+    var resourcePathFor3d="/web/static/3d/";
     //用来拾取场景里面的物体,更方便用鼠标操作3Ｄ场景
     var raycaster = new THREE.Raycaster();
 
@@ -118,22 +119,23 @@ var OBJECTS_TO_LOAD = [
         scene.add(axisHelper);
 
         console.info("init component ok....");
-
         //2.添加物体
         //材质加载器,模型加载器
         var mtlLoader = new THREE.MTLLoader();
         var objLoader = new THREE.OBJLoader();
+        mtlLoader.setPath(resourcePathFor3d);
+        objLoader.setPath(resourcePathFor3d);
         for (var i=0; i<OBJECTS_TO_LOAD.length; i++) {
             var objJson = OBJECTS_TO_LOAD[i];
-            mtlLoader.load(objJson.mtlPath, function(materials) {
+            mtlLoader.load(objJson.mtl, function(materials) {
                 materials.preload();
                 objLoader.setMaterials(materials);
-                objLoader.load(objJson.objPath, function (object) {
+                objLoader.load(objJson.obj, function (object) {
                     object.traverse(function(child) {
                         if (child instanceof THREE.Mesh) {
-                            child.material = new THREE.MeshLambertMaterial({
-                                side: THREE.DoubleSide
-                            });
+//                            child.material = new THREE.MeshLambertMaterial({
+//                                side: THREE.DoubleSide
+//                            });
                         }
                     });
                     scene.add(object);
