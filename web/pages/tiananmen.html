@@ -8,6 +8,7 @@
     <title>Tian An Men 3D</title>
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <script type="text/javascript" src="/web/static/js/three.js"></script>
+    <script type="text/javascript" src="/web/static/js/CSS2DRenderer.js"></script>
     <script type="text/javascript" src="/web/static/js/MTLLoader.js"></script>
     <script type="text/javascript" src="/web/static/js/OBJLoader.js"></script>
     <script type="text/javascript" src="/web/static/js/OrbitControls.js"></script>
@@ -47,6 +48,13 @@
      *
      * 3.THREE.Box3
      *      便于采集对象的坐标位置
+     *
+     * 4.THREE.GridHelper(边长, 分割线数量, 中心分割线颜色, 分割线颜色)
+     *      地平面网格辅助
+     *
+     * 5.THREE.PolarGridHelper(半径, 从中心发向边缘的切割先数量, 切割从中心发射线的数量, 边数(数值越大越接近圆, 4为正方形), 纵向分割线的颜色, 横向分割线的颜色)
+     *      环状平面辅助
+     *
      * */
 </script>
 <script type="text/javascript">
@@ -84,6 +92,7 @@ var OBJECTS_TO_LOAD = [
 </script>
 <script type="text/javascript">
     var renderer;
+    var cSS2DRenderer;
     var scene;
     var camera;
     var axisHelper;
@@ -92,6 +101,7 @@ var OBJECTS_TO_LOAD = [
     var directBlackLight;
     var resourcePathFor3d="/web/static/3d/";
     var orbitController;
+    var cSS2DGroup;
     //用来拾取场景里面的物体,更方便用鼠标操作3Ｄ场景
     var raycaster = new THREE.Raycaster();
 
@@ -106,13 +116,23 @@ var OBJECTS_TO_LOAD = [
         //设备像素比，一般为１
         renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById("container").appendChild(renderer.domElement);
+
+        cSS2DRenderer = new THREE.CSS2DRenderer();
+        cSS2DRenderer.setSize(window.innerWidth, window.innerHeight);
+        cSS2DRenderer.domElement.style.position = 'absolute';
+        cSS2DRenderer.domElement.style.top = '0';
+        document.getElementById('container').appendChild(cSS2DRenderer.domElement);
+
         //场景
         scene = new THREE.Scene();
         //相机
         camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 1, 100000);
         //环形轨道控制器
-        orbitController = new THREE.OrbitControls(camera, renderer.domElement);
+        orbitController = new THREE.OrbitControls(camera, cSS2DRenderer.domElement);
         orbitController.addEventListener('change', pageRender);
+        //2D平面元素组
+        cSS2DGroup = new THREE.Object3D();
+        scene.add(cSS2DGroup);
         //白色平行光照
         directWhiteLight = new THREE.DirectionalLight(0xffffff);
         directWhiteLight.position.set(1, 1, 1);
@@ -126,7 +146,7 @@ var OBJECTS_TO_LOAD = [
         scene.add(directBlackLight);
 
         //坐标系
-        axisHelper = new THREE.AxisHelper(7);
+        axisHelper = new THREE.AxisHelper(100000);
         scene.add(axisHelper);
 
         console.info("init component ok....");
@@ -137,14 +157,76 @@ var OBJECTS_TO_LOAD = [
         mtlLoader.setPath(resourcePathFor3d);
         objLoader.setPath(resourcePathFor3d);
         for (var i=0; i<OBJECTS_TO_LOAD.length; i++) {
+            console.info("for loop runs....");
             var objJson = OBJECTS_TO_LOAD[i];
             mtlLoader.load(objJson.mtl, function(materials) {
                 materials.preload();
                 objLoader.setMaterials(materials);
-                objLoader.load(objJson.obj, function (object) {
-                    scene.add(object);
-                    var box= new THREE.Box3().setFromObject(object);
+                objLoader.load(objJson.obj, function (group) {
+                    //object 为Three.Group类型
+                    scene.add(group);
+                    var box= new THREE.Box3().setFromObject(group);
                     camera.position.set(box.getCenter().x, box.getCenter().y+3000, box.getCenter().z+10000);
+
+                    //左上角平面坐标
+//                    var min = {x: box.min.x, y: box.min.z};
+                    var min = {x: 1, y: 1};
+
+                    raycaster.setFromCamera(min, camera);
+                    var alarmDiv = document.createElement("div");
+                    alarmDiv.style.width = "32px";
+                    alarmDiv.style.height = "32px";
+                    var image = document.createElement("img");
+                    image.src = "/web/static/images/fire_alarm.png";
+                    alarmDiv.appendChild(image);
+
+                    var alarmDiv2D = new THREE.CSS2DObject(alarmDiv);
+                    alarmDiv2D.position.copy(min);
+                    alarmDiv2D.needsUpdate=true;
+                    alarmDiv2D.position.copy(raycaster.intersectObjects(group.children)[0].point);
+                    alarmDiv2D.needsUpdate=true;
+                    cSS2DGroup.add(alarmDiv2D);
+
+                    //添加3D模型地平面网格辅助
+//                    var length =  box.max.x - box.min.x;
+//                    var gridHelper = new THREE.GridHelper( length, 10, "yellow", 0x000000 );
+//                    scene.add(gridHelper);
+                    //地坪面圆环行辅助
+//                    var radius = Math.sqrt(Math.pow((length/2), 2) * 2);
+//                    var polarGridHelper = new THREE.PolarGridHelper(radius, 64, 64, 640, 0x0000ff, "white" );
+//                    scene.add(polarGridHelper);
+
+//                    var mesh = new THREE.Mesh(group.children[0].geometry, group.children[0].material);
+//                    var fnh = new THREE.FaceNormalsHelper(mesh, 1000);
+//                    scene.add(fnh);
+//                    var vnh = new THREE.VertexNormalsHelper(mesh, 5);
+//                    scene.add(vnh);
+
+                    //内部网格结构
+//                    var wireframe = new THREE.WireframeGeometry(group.children[0].geometry);
+//                    var line = new THREE.LineSegments(wireframe);
+//                    line.material.depthTest = false;
+//                    line.material.opacity = 0.25;
+//                    line.material.transparent = true;
+//                    line.position.x = 4;
+//                    group.add(line);
+//                    scene.add(new THREE.BoxHelper(line));
+
+
+//                    var edges = new THREE.EdgesGeometry(group.children[0].geometry);
+//                    var edgesLine = new THREE.LineSegments( edges );
+//                    edgesLine.material.depthTest = false;
+//                    edgesLine.material.opacity = 0.25;
+//                    edgesLine.material.transparent = true;
+//                    edgesLine.position.x = -4;
+//                    group.add(edgesLine);
+//                    scene.add(new THREE.BoxHelper(edgesLine));
+
+                    //把模型包裹成一个盒子
+                    scene.add(new THREE.BoxHelper(group.children[0]));
+                    //把整个Scene包裹成一个盒子
+                    scene.add(new THREE.BoxHelper(scene));
+
                     <!-- 该方法不能抽取到pageRender()方法中会导致堆栈溢出,原因不明 -->
                     orbitController.update();
                 }, function () {
@@ -158,6 +240,7 @@ var OBJECTS_TO_LOAD = [
 
     function pageRender() {
         renderer.render(scene, camera);
+        cSS2DRenderer.render(scene, camera);
     }
 
 </script>
