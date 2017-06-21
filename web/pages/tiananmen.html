@@ -1,4 +1,6 @@
+<!--html4使用-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--html5使用-->
 <!--<!DOCTYPE html>-->
 <html lang="en">
 <head>
@@ -8,6 +10,9 @@
     <script type="text/javascript" src="/web/static/js/three.js"></script>
     <script type="text/javascript" src="/web/static/js/MTLLoader.js"></script>
     <script type="text/javascript" src="/web/static/js/OBJLoader.js"></script>
+    <script type="text/javascript" src="/web/static/js/OrbitControls.js"></script>
+    <!--Normalize.css是一种CSS reset的替代方案,在默认的HTML元素样式上提供了跨浏览器的高度一致性。相比于传统的CSS reset，Normalize.css是一种现代的、为HTML5准备的优质替代方案-->
+    <link type="text/css" rel="stylesheet" href="/web/static/css/normalize.css"/>
     <style type="text/css">
         body {
             width: 100%;
@@ -17,7 +22,8 @@
         }
     </style>
 </head>
-<body id="htmlBody">
+<body>
+    <div id="container"></div>
 </body>
 <script type="text/javascript">
     /**
@@ -84,6 +90,7 @@ var OBJECTS_TO_LOAD = [
     var directBlueLight;
     var directBlackLight;
     var resourcePathFor3d="/web/static/3d/";
+    var orbitController;
     //用来拾取场景里面的物体,更方便用鼠标操作3Ｄ场景
     var raycaster = new THREE.Raycaster();
 
@@ -97,11 +104,14 @@ var OBJECTS_TO_LOAD = [
         renderer.setClearColor(0xaaaaff, 1.0);
         //设备像素比，一般为１
         renderer.setPixelRatio(window.devicePixelRatio);
-        document.getElementById("htmlBody").appendChild(renderer.domElement);
+        document.getElementById("container").appendChild(renderer.domElement);
         //场景
         scene = new THREE.Scene();
         //相机
         camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 1, 100000);
+        //环形轨道控制器
+        orbitController = new THREE.OrbitControls(camera, renderer.domElement);
+        orbitController.addEventListener('change', render);
         //白色平行光照
         directWhiteLight = new THREE.DirectionalLight(0xffffff);
         directWhiteLight.position.set(1, 1, 1);
@@ -131,17 +141,11 @@ var OBJECTS_TO_LOAD = [
                 materials.preload();
                 objLoader.setMaterials(materials);
                 objLoader.load(objJson.obj, function (object) {
-                    object.traverse(function(child) {
-                        if (child instanceof THREE.Mesh) {
-//                            child.material = new THREE.MeshLambertMaterial({
-//                                side: THREE.DoubleSide
-//                            });
-                        }
-                    });
                     scene.add(object);
                     var box= new THREE.Box3().setFromObject(object);
-                    camera.position.set(box.getCenter().x, box.getCenter().y+3000, box.getCenter().z+10000 );
-                    renderer.render(scene, camera);
+                    camera.position.set(box.getCenter().x, box.getCenter().y+3000, box.getCenter().z+10000);
+                    orbitController.update();
+                    render();
                 }, function () {
                     console.info("on progress....");
                 }, function () {
@@ -150,18 +154,26 @@ var OBJECTS_TO_LOAD = [
             });
         };
         //渲染
-        renderer.render(scene, camera);
+        render();
     }();
 
-
+    function render() {
+        renderer.render(scene, camera);
+    }
 
 </script>
 <script type="text/javascript">
+    //时间精度比较大,cpu使用率过高时会自动跳过某些帧, 一般在60FPS左右
+    function animate() {
+        requestAnimationFrame( animate );
+        orbitController.update();
+        render();
+    }
     window.onresize = function() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize( window.innerWidth, window.innerHeight );
-        renderer.render(scene, camera);
+        render();
     }
 </script>
 </html>
