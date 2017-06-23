@@ -289,5 +289,7 @@ $.css = function(id, csskey, cssvalue) {
     if (dom) {
         dom.style[csskey] = cssvalue;
     }
-}
+};
+
+
 

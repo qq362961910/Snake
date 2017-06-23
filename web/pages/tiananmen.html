@@ -201,6 +201,7 @@ var OBJECTS_TO_LOAD = [
     var orbitController;
     var cSS2DGroup;
     var currentModel;
+    var currentModelBox;
     //用来拾取场景里面的物体,更方便用鼠标操作3Ｄ场景
     var raycaster = new THREE.Raycaster();
 
@@ -228,13 +229,13 @@ var OBJECTS_TO_LOAD = [
         camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 1, 100000);
         //环形轨道控制器
         orbitController = new THREE.OrbitControls(camera, cSS2DRenderer.domElement);
-        orbitController.addEventListener('change', pageRender);
+        orbitController.addEventListener('change', orbitControllerChange);
         //最小偏离顶点角度
         orbitController.minPolarAngle = 0;
         //最大偏离顶点角度
-        orbitController.maxPolarAngle = Math.PI/3;
+        orbitController.maxPolarAngle = Math.PI;
         //2D平面元素组
-        cSS2DGroup = new THREE.Object3D();
+        cSS2DGroup = new THREE.Group();
         scene.add(cSS2DGroup);
         //白色平行光照
         directWhiteLight = new THREE.DirectionalLight(0xffffff);
@@ -249,8 +250,8 @@ var OBJECTS_TO_LOAD = [
         scene.add(directBlackLight);
 
         //坐标系
-        /*axisHelper = new THREE.AxisHelper(100000);
-        scene.add(axisHelper);*/
+        axisHelper = new THREE.AxisHelper(100000);
+        scene.add(axisHelper);
 
         console.info("init component ok....");
 
@@ -274,7 +275,7 @@ var OBJECTS_TO_LOAD = [
 //                objLoader.load(objJson.obj, function (group) {
 //                    objJson.model = group;
 
-                    //object 为Three.Group类型
+//                    object 为Three.Group类型
 //                    scene.add(group);
 //                    var box= new THREE.Box3().setFromObject(group.children[0]);
 //                    camera.position.set(box.getCenter().x, box.getCenter().y+3000, box.getCenter().z+10000);
@@ -308,7 +309,7 @@ var OBJECTS_TO_LOAD = [
 //                    var alarmDiv2DAlarm = new THREE.CSS2DObject(alarmDiv);
 //                    alarmDiv2DAlarm.position.copy(alarmPoint);
 //                    cSS2DGroup.add(alarmDiv2DAlarm);
-
+//                    console.log("point: "  + JSON.stringify(alarmPoint));
                     //添加3D模型地平面网格辅助
 //                    var length =  box.max.x - box.min.x;
 //                    var gridHelper = new THREE.GridHelper( length, 10, "yellow", 0x000000 );
@@ -374,8 +375,8 @@ var OBJECTS_TO_LOAD = [
             objLoader.setMaterials(materials);
             objLoader.load(objJson.obj, function (group) {
                 objJson.model = group;
-                if(objJson.modelcode == "tianguanweineibu_f4") {
-                    showModel("tianguanweineibu_f4");
+                if(objJson.modelcode == "tiananmen") {
+                    showModel("tiananmen");
                 }
             }, function (xhr) {
                 console.info("on progress....");
@@ -395,6 +396,8 @@ var OBJECTS_TO_LOAD = [
         }
         if (cSS2DGroup) {
             scene.remove(cSS2DGroup);
+            cSS2DGroup = new THREE.Group();
+            removeAlarmsPoint();
         }
         for (var i=0; i<OBJECTS_TO_LOAD.length; i++) {
             var objJson = OBJECTS_TO_LOAD[i];
@@ -406,6 +409,7 @@ var OBJECTS_TO_LOAD = [
                 orbitController.target= new THREE.Vector3(box.getCenter().x, box.getCenter().y, box.getCenter().z );
                 orbitController.update();
                 currentModel = objJson.model;
+                currentModelBox = box;
                 console.log("loading model: " + modelcode);
                 break;
             }
@@ -415,8 +419,45 @@ var OBJECTS_TO_LOAD = [
     function pageRender() {
         renderer.render(scene, camera);
         cSS2DRenderer.render(scene, camera);
+    }
+
+    function orbitControllerChange() {
+        pageRender();
         var deg = THREE.Math.radToDeg(orbitController.getAzimuthalAngle())+"deg";
         $.css("#compass", "transform", "rotate("+ deg +")");
+    }
+
+    function removeAlarmsPoint() {
+        var alarmPoints = $(".alarmPoint");
+        if (alarmPoints && alarmPoints.length) {
+            while(alarmPoints.length > 0) {
+                alarmPoints[0].remove();
+            }
+        }
+    }
+
+    function addAlarmPoint(xrate, yrate) {
+
+        //在指定位置添加２Ｄ图片
+        var alarmDiv = document.createElement("div");
+        alarmDiv.className = "alarmPoint";
+        alarmDiv.style.width = "32px";
+        alarmDiv.style.height = "32px";
+        var image = document.createElement("img");
+        image.src = "/web/static/images/fire_alarm.png";
+        alarmDiv.appendChild(image);
+
+        var width = currentModelBox.max.x - currentModelBox.min.x;
+        var length = currentModelBox.max.z - currentModelBox.min.z;
+        var xAdd = width * xrate;
+        var zAdd = length * yrate;
+
+        var alarmPoint = {x: currentModelBox.min.x + xAdd, y: 0, z: currentModelBox.min.z + zAdd + 70};
+        var alarmDiv2DAlarm = new THREE.CSS2DObject(alarmDiv);
+        alarmDiv2DAlarm.position.copy(alarmPoint);
+        cSS2DGroup.add(alarmDiv2DAlarm);
+        scene.add(cSS2DGroup);
+        pageRender();
     }
 
 </script>
