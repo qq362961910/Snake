@@ -13,7 +13,11 @@
     <script type="text/javascript" src="/web/static/js/OBJLoader.js"></script>
     <script type="text/javascript" src="/web/static/js/OrbitControls.js"></script>
     <!--Normalize.css是一种CSS reset的替代方案,在默认的HTML元素样式上提供了跨浏览器的高度一致性。相比于传统的CSS reset，Normalize.css是一种现代的、为HTML5准备的优质替代方案-->
-    <link type="text/css" rel="stylesheet" href="/web/static/css/normalize.css"/>
+    <link type="text/css" href="/web/static/css/normalize.css" rel="stylesheet"/>
+    <link type="text/css" href="/web/static/global/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
+    <link type="text/css" href="/web/static/global/css/components.min.css" rel="stylesheet"/>
+    <link type="text/css" href="/web/static/global/css/map.css" rel="stylesheet"/>
+    <link type="text/css" href="/web/static/global/css/map-icons.css" rel="stylesheet"/>
     <style type="text/css">
         body {
             width: 100%;
@@ -24,7 +28,55 @@
     </style>
 </head>
 <body>
-    <div id="container"></div>
+<!-- 导航条 -->
+<nav class="navbar-fixed-top col-md-10" role="navigation">
+    <div class=" clearfix  btn-group bg-dark  btn-group-solid pull-left margin-right-10" data-toggle="buttons" style="margin-left:-15px;margin-top:4px;font-size: 20px; line-height: 40px;font-weight:bold; font-family:微软雅黑!important;padding:0 20px;">
+        <h4 id="page_title" style="color:#fff">3D模型</h4>
+    </div>
+    <div class=" clearfix  btn-group bg-white btn-group-solid margin-top-10 pull-left" data-toggle="buttons">
+        <label class="btn dark">
+            <input type="checkbox" name="checkbox" class="toggle" onclick="showModel('tiananmen')"/>
+            <span>天安门</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" name="checkbox" class="toggle" onclick="showModel('tiananmen_f1')"/>
+            <span>一层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" name="checkbox" class="toggle" onclick="showModel('tiananmen_f2')"/>
+            <span>二层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" name="checkbox" class="toggle" onclick="showModel('tianguanwei')"/>
+            <span>天管委</span>
+        </label>
+        <label class="btn dark ">
+            <input type="checkbox" name="checkbox" class="toggle" onclick="showModel('tianguanweineibu')"/>
+            <span>天管委内部</span>
+        </label>
+        <label class="btn dark ">
+            <input type="checkbox" name="checkbox" class="toggle" onclick="showModel('tianguanweineibu_b1')"/>
+            <span>地下一层</span>
+        </label>
+        <label class="btn dark ">
+            <input type="checkbox" name="checkbox" class="toggle" onclick="showModel('tianguanweineibu_f1')"/>
+            <span>一层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" name="checkbox" class="toggle" onclick="showModel('tianguanweineibu_f2')"/>
+            <span>二层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" name="checkbox" class="toggle" onclick="showModel('tianguanweineibu_f3')"/>
+            <span>三层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" name="checkbox" class="toggle" onclick="showModel('tianguanweineibu_f4')"/>
+            <span>四层</span>
+        </label>
+    </div>
+</nav>
+<div id="container"></div>
 </body>
 <script type="text/javascript">
     /**
@@ -54,6 +106,10 @@
      *
      * 5.THREE.PolarGridHelper(半径, 从中心发向边缘的切割先数量, 切割从中心发射线的数量, 边数(数值越大越接近圆, 4为正方形), 纵向分割线的颜色, 横向分割线的颜色)
      *      环状平面辅助
+     * 6.THREE.Raycaster()
+     *      光线投射器
+     *      作用: 光线投射主要用于物体选择、碰撞检测以及图像成像等方面
+     *
      *
      * */
 </script>
@@ -85,8 +141,65 @@
 var rootPath = location.origin;
 var OBJECTS_TO_LOAD = [
     {
+        modelcode: "tiananmen",
         mtl: "tiananmen.mtl",
-        obj: "tiananmen.obj"
+        obj: "tiananmen.obj",
+        model: null
+    },
+    {
+        modelcode: "tiananmen_f1",
+        mtl: "tiananmenneibu_F1.mtl",
+        obj: "tiananmenneibu_F1.obj",
+        model: null
+
+    },
+    {
+        modelcode: "tiananmen_f2",
+        mtl: "tiananmenneibu_F2.mtl",
+        obj: "tiananmenneibu_F2.obj",
+        model: null
+    },
+    {
+        modelcode: "tianguanwei",
+        mtl: "tianguanwei.mtl",
+        obj: "tianguanwei.obj",
+        model: null
+    },
+    {
+        modelcode: "tianguanweineibu",
+        mtl: "tianguanweineibu.mtl",
+        obj: "tianguanweineibu.obj",
+        model: null
+    },
+    {
+        modelcode: "tianguanweineibu_b1",
+        mtl: "tianguanweineibu_B1.mtl",
+        obj: "tianguanweineibu_B1.obj",
+        model: null
+    },
+    {
+        modelcode: "tianguanweineibu_f1",
+        mtl: "tianguanweineibu_F1.mtl",
+        obj: "tianguanweineibu_F1.obj",
+        model: null
+    },
+    {
+        modelcode: "tianguanweineibu_f2",
+        mtl: "tianguanweineibu_F2.mtl",
+        obj: "tianguanweineibu_F2.obj",
+        model: null
+    },
+    {
+        modelcode: "tianguanweineibu_f3",
+        mtl: "tianguanweineibu_F3.mtl",
+        obj: "tianguanweineibu_F3.obj",
+        model: null
+    },
+    {
+        modelcode: "tianguanweineibu_f4",
+        mtl: "tianguanweineibu_F4.mtl",
+        obj: "tianguanweineibu_F4.obj",
+        model: null
     }
 ];
 </script>
@@ -102,6 +215,7 @@ var OBJECTS_TO_LOAD = [
     var resourcePathFor3d="/web/static/3d/";
     var orbitController;
     var cSS2DGroup;
+    var currentModel;
     //用来拾取场景里面的物体,更方便用鼠标操作3Ｄ场景
     var raycaster = new THREE.Raycaster();
 
@@ -150,42 +264,61 @@ var OBJECTS_TO_LOAD = [
         scene.add(axisHelper);
 
         console.info("init component ok....");
+
+        for (var i=0; i<OBJECTS_TO_LOAD.length; i++) {
+            var objJson = OBJECTS_TO_LOAD[i];
+            loadMoedl(objJson);
+        }
+
         //2.添加物体
         //材质加载器,模型加载器
-        var mtlLoader = new THREE.MTLLoader();
-        var objLoader = new THREE.OBJLoader();
-        mtlLoader.setPath(resourcePathFor3d);
-        objLoader.setPath(resourcePathFor3d);
-        for (var i=0; i<OBJECTS_TO_LOAD.length; i++) {
-            console.info("for loop runs....");
-            var objJson = OBJECTS_TO_LOAD[i];
-            mtlLoader.load(objJson.mtl, function(materials) {
-                materials.preload();
-                objLoader.setMaterials(materials);
-                objLoader.load(objJson.obj, function (group) {
+//        var mtlLoader = new THREE.MTLLoader();
+//        var objLoader = new THREE.OBJLoader();
+//        mtlLoader.setPath(resourcePathFor3d);
+//        objLoader.setPath(resourcePathFor3d);
+//        for (var i=0; i<OBJECTS_TO_LOAD.length; i++) {
+//            console.info("for loop runs....");
+//            var objJson = OBJECTS_TO_LOAD[i];
+//            mtlLoader.load(objJson.mtl, function(materials) {
+//                materials.preload();
+//                objLoader.setMaterials(materials);
+//                objLoader.load(objJson.obj, function (group) {
+//                    objJson.model = group;
+
                     //object 为Three.Group类型
-                    scene.add(group);
-                    var box= new THREE.Box3().setFromObject(group);
-                    camera.position.set(box.getCenter().x, box.getCenter().y+3000, box.getCenter().z+10000);
+//                    scene.add(group);
+//                    var box= new THREE.Box3().setFromObject(group.children[0]);
+//                    camera.position.set(box.getCenter().x, box.getCenter().y+3000, box.getCenter().z+10000);
 
                     //左上角平面坐标
-//                    var min = {x: box.min.x, y: box.min.z};
-                    var min = {x: 1, y: 1};
+                    /*var min = {x: box.min.x, y: box.min.y, z: box.min.z};
+                    var max = {x: box.max.x, y: box.max.y, z: box.max.z};*/
 
-                    raycaster.setFromCamera(min, camera);
-                    var alarmDiv = document.createElement("div");
-                    alarmDiv.style.width = "32px";
-                    alarmDiv.style.height = "32px";
-                    var image = document.createElement("img");
-                    image.src = "/web/static/images/fire_alarm.png";
-                    alarmDiv.appendChild(image);
-
-                    var alarmDiv2D = new THREE.CSS2DObject(alarmDiv);
-                    alarmDiv2D.position.copy(min);
-                    alarmDiv2D.needsUpdate=true;
-                    alarmDiv2D.position.copy(raycaster.intersectObjects(group.children)[0].point);
-                    alarmDiv2D.needsUpdate=true;
-                    cSS2DGroup.add(alarmDiv2D);
+                    //在指定位置添加２Ｄ图片
+//                    var alarmDiv = document.createElement("div");
+//                    alarmDiv.style.width = "32px";
+//                    alarmDiv.style.height = "32px";
+//                    var image = document.createElement("img");
+//                    image.src = "/web/static/images/fire_alarm.png";
+//                    alarmDiv.appendChild(image);
+//
+//                    var width = box.max.x - box.min.x;
+//                    var length = box.max.z - box.min.z;
+//                    var xrate = 0.5;
+//                    var yrate = 0.5;
+//                    var xAdd = width * xrate;
+//                    var zAdd = length * yrate;
+//
+//                    var alarmPoint = {x: box.min.x + xAdd, y: 0, z: box.min.z + zAdd};
+//                    alarmDiv = document.createElement("div");
+//                    alarmDiv.style.width = "32px";
+//                    alarmDiv.style.height = "32px";
+//                    image = document.createElement("img");
+//                    image.src = "/web/static/images/fire_alarm.png";
+//                    alarmDiv.appendChild(image);
+//                    var alarmDiv2DAlarm = new THREE.CSS2DObject(alarmDiv);
+//                    alarmDiv2DAlarm.position.copy(alarmPoint);
+//                    cSS2DGroup.add(alarmDiv2DAlarm);
 
                     //添加3D模型地平面网格辅助
 //                    var length =  box.max.x - box.min.x;
@@ -223,20 +356,68 @@ var OBJECTS_TO_LOAD = [
 //                    scene.add(new THREE.BoxHelper(edgesLine));
 
                     //把模型包裹成一个盒子
-                    scene.add(new THREE.BoxHelper(group.children[0]));
+//                    scene.add(new THREE.BoxHelper(group.children[0]));
                     //把整个Scene包裹成一个盒子
-                    scene.add(new THREE.BoxHelper(scene));
+//                    scene.add(new THREE.BoxHelper(scene));
 
                     <!-- 该方法不能抽取到pageRender()方法中会导致堆栈溢出,原因不明 -->
-                    orbitController.update();
-                }, function () {
-                    console.info("on progress....");
-                }, function () {
-                    console.info("on error");
-                });
-            });
-        };
+
+
+//                    orbitController.update();
+//                }, function () {
+//                    console.info("on progress....");
+//                }, function () {
+//                    console.info("on error");
+//                });
+//            });
+//        };
     }();
+
+
+
+    function loadMoedl(objJson, callback) {
+        var mtlLoader = new THREE.MTLLoader();
+        var objLoader = new THREE.OBJLoader();
+        mtlLoader.setPath(resourcePathFor3d);
+        objLoader.setPath(resourcePathFor3d);
+        mtlLoader.load(objJson.mtl, function(materials) {
+            materials.preload();
+            objLoader.setMaterials(materials);
+            objLoader.load(objJson.obj, function (group) {
+                objJson.model = group;
+                if(objJson.modelcode == "tianguanweineibu_f4") {
+                    showModel("tianguanweineibu_f4");
+                }
+            }, function () {
+                console.info("on progress....");
+            }, function () {
+                console.info("on error");
+            });
+        });
+    }
+
+    function showModel(modelcode) {
+        if (currentModel) {
+            scene.remove(currentModel);
+        }
+        if (cSS2DGroup) {
+            scene.remove(cSS2DGroup);
+        }
+        for (var i=0; i<OBJECTS_TO_LOAD.length; i++) {
+            var objJson = OBJECTS_TO_LOAD[i];
+            if (objJson.modelcode == modelcode) {
+                scene.add(objJson.model);
+                var box= new THREE.Box3().setFromObject(objJson.model.children[0]);
+                camera.position.set(box.getCenter().x, box.getCenter().y+3000, box.getCenter().z+10000);
+                //切换环绕控制器目标
+                orbitController.target= new THREE.Vector3(box.getCenter().x, box.getCenter().y, box.getCenter().z );
+                orbitController.update();
+                currentModel = objJson.model;
+                console.log("loading model: " + modelcode);
+                break;
+            }
+        }
+    }
 
     function pageRender() {
         renderer.render(scene, camera);
