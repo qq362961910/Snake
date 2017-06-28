@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script src="/web/static/js/jquery.min.js" type="text/javascript"></script>
+    <script type="text/javascript" src="/web/static/js/three.js"></script>
+    <script type="text/javascript" src="/web/static/js/CSS2DRenderer.js"></script>
+    <script type="text/javascript" src="/web/static/js/MTLLoader.js"></script>
+    <script type="text/javascript" src="/web/static/js/OBJLoader.js"></script>
+    <script type="text/javascript" src="/web/static/js/OrbitControls.js"></script>
+
+    <link type="text/css" href="/web/static/css/normalize.css" rel="stylesheet"/>
+    <link type="text/css" href="/web/static/global/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
+    <link type="text/css" href="/web/static/global/css/components.min.css" rel="stylesheet"/>
+    <link type="text/css" href="/web/static/global/css/map.css" rel="stylesheet"/>
+    <link type="text/css" href="/web/static/global/css/map-icons.css" rel="stylesheet"/>
+    <style type="text/css">
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <title>重点建筑</title>
+</head>
+<body>
+<!-- 导航条 -->
+<nav class="navbar-fixed-top col-md-10" role="navigation">
+    <div class=" clearfix  btn-group bg-dark  btn-group-solid pull-left margin-right-10" data-toggle="buttons" style="margin-left:-15px;margin-top:4px;font-size: 20px; line-height: 40px;font-weight:bold; font-family:微软雅黑!important;padding:0 20px;">
+        <h4 id="page_title" style="color:#fff">3D模型</h4>
+    </div>
+    <div class=" clearfix  btn-group bg-white btn-group-solid margin-top-10 pull-left" data-toggle="buttons">
+        <label class="btn dark">
+            <input type="checkbox" onclick="showModel('tiananmen')"/>
+            <span>天安门</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" onclick="showModel('tiananmen_f1')"/>
+            <span>一层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" onclick="showModel('tiananmen_f2')"/>
+            <span>二层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" onclick="showModel('tianguanwei')"/>
+            <span>天管委</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" onclick="showModel('tianguanweineibu_b1')"/>
+            <span>地下一层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" onclick="showModel('tianguanweineibu_f1')"/>
+            <span>一层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" onclick="showModel('tianguanweineibu_f2')"/>
+            <span>二层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" onclick="showModel('tianguanweineibu_f3')"/>
+            <span>三层</span>
+        </label>
+        <label class="btn dark">
+            <input type="checkbox" onclick="showModel('tianguanweineibu_f4')"/>
+            <span>四层</span>
+        </label>
+    </div>
+</nav>
+<div id="container">
+</div>
+<div id="compass" style="position: absolute; right: 1%; bottom: 1%;
+                width: 10%; height: 10%;  background: url('/web/static/3d/texture/pointer.jpg') no-repeat top center; background-size: contain;z-index: 9999">
+</div>
+</body>
+</body>
+<script type="text/javascript">
+    if(!window.addEventListener) {
+        window.addEventListener = window.attachEvent;
+    }
+</script>
+<script type="text/javascript">
+    //定义常量
+    var OBJECTS_TO_LOAD = [
+        {
+            modelcode: "tiananmen",
+            mtl: "tiananmen.mtl",
+            obj: "tiananmen.obj",
+            model: null
+        },
+        {
+            modelcode: "tiananmen_f1",
+            mtl: "tiananmenneibu_F1.mtl",
+            obj: "tiananmenneibu_F1.obj",
+            model: null
+
+        },
+        {
+            modelcode: "tiananmen_f2",
+            mtl: "tiananmenneibu_F2.mtl",
+            obj: "tiananmenneibu_F2.obj",
+            model: null
+        },
+        {
+            modelcode: "tianguanwei",
+            mtl: "tianguanwei.mtl",
+            obj: "tianguanwei.obj",
+            model: null
+        },
+        {
+            modelcode: "tianguanweineibu_b1",
+            mtl: "tianguanweineibu_B1.mtl",
+            obj: "tianguanweineibu_B1.obj",
+            model: null
+        },
+        {
+            modelcode: "tianguanweineibu_f1",
+            mtl: "tianguanweineibu_F1.mtl",
+            obj: "tianguanweineibu_F1.obj",
+            model: null
+        },
+        {
+            modelcode: "tianguanweineibu_f2",
+            mtl: "tianguanweineibu_F2.mtl",
+            obj: "tianguanweineibu_F2.obj",
+            model: null
+        },
+        {
+            modelcode: "tianguanweineibu_f3",
+            mtl: "tianguanweineibu_F3.mtl",
+            obj: "tianguanweineibu_F3.obj",
+            model: null
+        },
+        {
+            modelcode: "tianguanweineibu_f4",
+            mtl: "tianguanweineibu_F4.mtl",
+            obj: "tianguanweineibu_F4.obj",
+            model: null
+        }
+    ];
+    var AlarmEvent = 1;
+    var MalfunctionEvent = 2;
+    var loadModelCount = 0;
+    var blingPoints = [];
+</script>
+<script type="text/javascript">
+    var renderer;
+    var cSS2DRenderer;
+    var scene;
+    var camera;
+    var directWhiteLight;
+    var directBlueLight;
+    var directBlackLight;
+    var resourcePathFor3d="/web/static/3d/";
+    var orbitController;
+    var currentModel;
+    var currentModelCode;
+    var currentModelBox;
+    var modelAlarmMapping = {};
+    var modelDeviceMalfunctionMapping = {};
+    //用来拾取场景里面的物体,更方便用鼠标操作3Ｄ场景
+    var raycaster = new THREE.Raycaster();
+
+    var init = function() {
+        //1.初始化组建
+        //渲染器, antialias是否优化边缘
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        //画布大小
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        //紫色背景,不透明
+        renderer.setClearColor(0xaaaaff, 1.0);
+        //设备像素比，一般为１
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById("container").appendChild(renderer.domElement);
+
+        cSS2DRenderer = new THREE.CSS2DRenderer();
+        cSS2DRenderer.setSize(window.innerWidth, window.innerHeight);
+        cSS2DRenderer.domElement.style.position = 'absolute';
+        cSS2DRenderer.domElement.style.top = '0';
+        document.getElementById('container').appendChild(cSS2DRenderer.domElement);
+
+        //场景
+        scene = new THREE.Scene();
+        //相机
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 1, 100000);
+        //环形轨道控制器
+        orbitController = new THREE.OrbitControls(camera, cSS2DRenderer.domElement);
+        orbitController.addEventListener('change', orbitControllerChange);
+        //最大偏离顶点角度
+        orbitController.maxPolarAngle = Math.PI/3;
+        //白色平行光照
+        directWhiteLight = new THREE.DirectionalLight(0xffffff);
+        directWhiteLight.position.set(1, 1, 1);
+        scene.add(directWhiteLight);
+        //蓝色平行光照
+        directBlueLight = new THREE.DirectionalLight(0x002288);
+        directBlueLight.position.set(-1, -1, -1);
+        scene.add(directBlueLight);
+        //黑色环境光照
+        directBlackLight = new THREE.AmbientLight(0x222222);
+        scene.add(directBlackLight);
+
+        console.info("init component ok....");
+
+        for (var i=0; i<OBJECTS_TO_LOAD.length; i++) {
+            var objJson = OBJECTS_TO_LOAD[i];
+            loadMoedl(objJson);
+        }
+    }();
+
+    function loadMoedl(objJson, callback) {
+        var mtlLoader = new THREE.MTLLoader();
+        var objLoader = new THREE.OBJLoader();
+        mtlLoader.setPath(resourcePathFor3d);
+        objLoader.setPath(resourcePathFor3d);
+        mtlLoader.load(objJson.mtl, function(materials) {
+            materials.preload();
+            objLoader.setMaterials(materials);
+            objLoader.load(objJson.obj, function (group) {
+                if (objJson.modelcode.indexOf("_") > -1) {
+                    group.rotateY(Math.PI);
+                }
+                objJson.model = group;
+                if(objJson.modelcode == "tiananmen") {
+                    showModel("tiananmen");
+                }
+                loadModelCount++;
+            }, function (xhr) {
+                console.info("on progress....");
+                if (xhr.lengthComputable) {
+                    var percentComplete = xhr.loaded / xhr.total * 100;
+                    console.log(Math.round(percentComplete, 2) + '% downloaded');
+                }
+            }, function () {
+                console.info("on error");
+            });
+        });
+    }
+
+    function showModel(modelcode) {
+
+        if (currentModel) {
+            scene.remove(currentModel);
+        }
+        removeMalfunctionPoint();
+        removeAlarmsPoint();
+        var objJson = selectObjJsonByModelCode(modelcode);
+        if (objJson) {
+            scene.add(objJson.model);
+            var box= new THREE.Box3().setFromObject(objJson.model);
+            camera.position.set(box.getCenter().x, box.getCenter().y+3000, box.getCenter().z+10000);
+            //切换环绕控制器目标
+            orbitController.target= new THREE.Vector3(box.getCenter().x, box.getCenter().y, box.getCenter().z );
+            orbitController.update();
+//            if (objJson.modelcode.indexOf("_") > -1) {
+//                $("#compass").css("transform","rotate(180deg)");
+//            }
+            currentModel = objJson.model;
+            currentModelCode = modelcode;
+            currentModelBox = box;
+            console.log("loading model: " + modelcode);
+        }
+        else {
+            console.error("no objJson found by modelcode: " + modelcode);
+        }
+    }
+
+    function selectObjJsonByModelCode(modelcode) {
+        for (var i=0; i<OBJECTS_TO_LOAD.length; i++) {
+            var objJson = OBJECTS_TO_LOAD[i];
+            if (objJson.modelcode == modelcode) {
+                return objJson;
+            }
+        }
+    }
+
+    function pageRender() {
+        renderer.render(scene, camera);
+        cSS2DRenderer.render(scene, camera);
+    }
+
+    function orbitControllerChange() {
+        pageRender();
+        var deg = THREE.Math.radToDeg(orbitController.getAzimuthalAngle())+"deg";
+        $("#compass").css("transform","rotate("+ deg +")");
+    }
+
+    function removeAlarmsPoint() {
+        var alarmPoints = $(".alarmPoint");
+        if (alarmPoints && alarmPoints.size()) {
+            var size = alarmPoints.size();
+            for (var i=0; i<size; i++) {
+                alarmPoints[i].remove();
+            }
+        }
+    }
+    function removeMalfunctionPoint() {
+        var malfunctionPoints = $(".malfunctionPoint");
+        if (malfunctionPoints && malfunctionPoints.size()) {
+            var size = malfunctionPoints.size();
+            for (var i=0; i<size; i++) {
+                malfunctionPoints[i].remove();
+            }
+        }
+    }
+
+    function addAlarmPoint(xrate, yrate) {
+        var image = "/3d/models/texture/fire_alarm.png";
+        addPoint(xrate, yrate, image, AlarmEvent);
+    }
+
+    function addDeviceMalfunctionPoint(xrate, yrate) {
+        var image = "/3d/models/texture/device_malfunction.png";
+        addPoint(xrate, yrate, image, MalfunctionEvent);
+    }
+
+    function addBlingPoint(dom) {
+        blingPoints.push(dom);
+    }
+
+    function addPoint(xrate, yrate, imgUrl, eventType) {
+        //在指定位置添加２Ｄ图片
+        var alarmDiv = document.createElement("div");
+        if (eventType == AlarmEvent) {
+            alarmDiv.className = "alarmPoint";
+        }
+        else if (eventType == MalfunctionEvent) {
+            alarmDiv.className = "malfunctionPoint";
+        }
+        alarmDiv.style.width = "32px";
+        alarmDiv.style.height = "32px";
+        var image = document.createElement("img");
+
+        image.src = imgUrl;
+        alarmDiv.appendChild(image);
+
+        var width = currentModelBox.max.x - currentModelBox.min.x;
+        var length = currentModelBox.max.z - currentModelBox.min.z;
+        var xAdd = width * (1 - xrate);
+        var zAdd = length * yrate;
+
+        var alarmPoint = {x: currentModelBox.min.x + xAdd, y: currentModelBox.max.y-50, z: currentModelBox.min.z + zAdd + 70};
+        var alarmDiv2DAlarm = new THREE.CSS2DObject(alarmDiv);
+        alarmDiv2DAlarm.position.copy(alarmPoint);
+        currentModel.add(alarmDiv2DAlarm);
+        if (eventType == AlarmEvent) {
+            modelAlarmMapping[currentModelCode] = alarmDiv2DAlarm;
+        }
+        else if (eventType == MalfunctionEvent) {
+            modelDeviceMalfunctionMapping[currentModelCode] = alarmDiv2DAlarm;
+        }
+        pageRender();
+        addBlingPoint(alarmDiv);
+    }
+
+</script>
+
+<script type="text/javascript">
+    window.onresize = function() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        cSS2DRenderer.setSize(window.innerWidth, window.innerHeight);
+        pageRender();
+    }
+</script>
+
+<script type="text/javascript">
+    var currentAlarm = null;
+    var currentMalfunction = null;
+
+    function getAlarmList(){
+        return [];
+    }
+    function getMalfunctionDeviceIncache(){
+        return [];
+    }
+
+    function task() {
+        if(loadModelCount != OBJECTS_TO_LOAD.length) {
+            console.info("load model count: " + loadModelCount);
+            return;
+        }
+        console.info("task run...");
+        var alarmlist = getAlarmList();
+        //有火情
+        if (alarmlist && alarmlist.length) {
+            //清理故障
+            if (currentMalfunction != null) {
+                for (var modelcode in modelDeviceMalfunctionMapping) {
+                    var model = modelDeviceMalfunctionMapping[modelcode];
+                    var objJson = selectObjJsonByModelCode(modelcode);
+                    if (objJson && objJson.model) {
+                        objJson.model.remove(model);
+                    }
+                }
+                currentMalfunction = null;
+            }
+
+            console.info("find an alarm, rendering it now....");
+            var newAlarm = alarmlist[0];
+            //室内报警
+            if(newAlarm.buildingId) {
+                //判断为同一建筑同一个点则取消本次绘制
+                if (currentAlarm && currentAlarm.deviceId == newAlarm.deviceId) {
+                    console.info("the same device, directly return");
+                    return;
+                }
+                else {
+                    currentAlarm = newAlarm;
+                }
+                var xrate = currentAlarm.xrate;
+                var yrate = currentAlarm.yrate;
+                if (!xrate || !yrate) {
+                    if (currentAlarm.device) {
+                        xrate = currentAlarm.device.xRate;
+                        yrate = currentAlarm.device.yRate;
+                    }
+                }
+                //绘制火情
+                if (xrate && yrate) {
+                    var modelcode = null;
+                    var floor = null;
+                    if (currentAlarm.device) {
+                        modelcode = currentAlarm.device.modelCode;
+                        floor = currentAlarm.device.floor;
+                    }
+                    else if (currentAlarm.building) {
+                        modelcode = currentAlarm.building.modelCode;
+                    }
+                    if (!floor) {
+                        floor = currentAlarm.floor;
+                    }
+                    if (modelcode && floor) {
+                        var modelcodeToUse = modelcode + "_" + (floor >0 ? "f" : "b") + floor;
+                        showModel(modelcodeToUse);
+                        addAlarmPoint(xrate , yrate);
+                    }
+                    else {
+                        console.error("error param: modelcode: " + modelcode + ", floor: " + floor);
+                    }
+                }
+                else {
+                    console.error("data not valid, xrate: " + xrate + ", yrate: " + yrate);
+                }
+            }
+        }
+        else {
+            console.info("no alram found");
+            //清理alarm point
+            if (currentAlarm != null) {
+                for (var modelcode in modelAlarmMapping) {
+                    var model = modelAlarmMapping[modelcode];
+                    var objJson = selectObjJsonByModelCode(modelcode);
+                    if (objJson && objJson.model) {
+                        objJson.model.remove(model);
+                    }
+                    if (objJson.modelcode == currentModelCode) {
+                        showModel(modelcode);
+                    }
+                }
+                currentAlarm = null;
+                console.info("alram cleared");
+            }
+            var malfunctionDevice = getMalfunctionDeviceIncache();
+            //有设备故障
+            if (malfunctionDevice && malfunctionDevice.length) {
+                console.info("find a malfunciton device, rendering it now....");
+                var newMalfunction = malfunctionDevice[0];
+                if(newMalfunction.buildingId) {
+                    //判断为同一建筑同一个点则取消本次绘制
+                    if (currentMalfunction && currentMalfunction.deviceId == newMalfunction.deviceId) {
+                        console.info("the same device, directly return");
+                        return;
+                    }
+                    else {
+                        currentMalfunction = newMalfunction;
+                    }
+                    var xrate = currentMalfunction.xrate;
+                    var yrate = currentMalfunction.yrate;
+                    if (!xrate || !yrate) {
+                        if (currentMalfunction.device) {
+                            xrate = currentMalfunction.device.xRate;
+                            yrate = currentMalfunction.device.yRate;
+                        }
+                    }
+                    //绘制火情
+                    if (xrate && yrate) {
+                        if (currentMalfunction.device) {
+                            var modelcode = currentMalfunction.device.modelCode;
+                            var floor = currentMalfunction.device.floor;
+                            if (modelcode && floor) {
+                                var modelcodeToUse = modelcode + "_" + (floor >0 ? "f" : "b") + floor;
+                                showModel(modelcodeToUse);
+                                addDeviceMalfunctionPoint(xrate , yrate);
+                            }
+                            else {
+                                console.error("error param: modelcode: " + modelcode + ", floor: " + floor);
+                            }
+                        }
+                        else {
+                            console.error("error param: 'currentMalfunction.device' not exists");
+                        }
+                    }
+                    else {
+                        console.error("data not valid, xrate: " + xrate + ", yrate: " + yrate);
+                    }
+                }
+            }
+            else {
+                console.info("no malfunction device found");
+                //清理alarm point
+                if (currentMalfunction != null) {
+                    for (var modelcode in modelDeviceMalfunctionMapping) {
+                        var model = modelDeviceMalfunctionMapping[modelcode];
+                        var objJson = selectObjJsonByModelCode(modelcode);
+                        if (objJson && objJson.model) {
+                            objJson.model.remove(model);
+                        }
+                        if (objJson.modelcode == currentModelCode) {
+                            showModel(modelcode);
+                        }
+                    }
+                    currentMalfunction = null;
+                    console.info("malfunction device cleared");
+                }
+            }
+        }
+    }
+
+
+    function begin () {
+        if(loadModelCount == OBJECTS_TO_LOAD.length) {
+//            window.addEventListener('message',function(event) {
+//                console.info('received response:  ' + event.data);
+//                task();
+//            },false);
+            task();
+            setInterval("task()", 1500);
+            setInterval("bling()", 500);
+        }
+        else {
+            setTimeout("begin()", 500);
+        }
+    }
+    function bling() {
+        for (var i=0; i<blingPoints.length; i++) {
+            if (blingPoints[i]) {
+                var display = blingPoints[i].style.display;
+                if (display != "block") {
+                    display = "block";
+                }
+                else {
+                    display = "none";
+                }
+                try { blingPoints[i].style.display = display; } catch (e) { }
+            }
+        }
+    }
+    setTimeout("begin()", 500);
+</script>
+</html>
