@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
         body {
-            margin: 0px;
+            margin: 0;
             background-color: #000000;
             overflow: hidden;
         }
@@ -36,7 +36,7 @@
 
         for (var i=1; i<=6; i++) {
             materials.push(new THREE.MeshBasicMaterial({
-                map: THREE.ImageUtils.loadTexture( 'static/images' + i + '.png',
+                map: THREE.ImageUtils.loadTexture( 'static/images/' + i + '.png',
                         {}, function() {
                             renderer.render(scene, camera);
                         }),
